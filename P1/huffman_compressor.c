@@ -3,6 +3,7 @@
 #include <string.h>
 #include <dirent.h>
 #include <sys/stat.h>
+#include <sys/time.h>
 
 #define MAX_FILES 100
 #define MAX_FILENAME 256
@@ -15,6 +16,20 @@ struct FileInfo {
     char* content;
     int size;
 };
+
+long long elapsedMillis(struct timeval start, struct timeval end)
+{
+    long seconds = end.tv_sec - start.tv_sec;
+    long microseconds = end.tv_usec - start.tv_usec;
+
+    if (microseconds < 0) {
+        seconds -= 1;
+        microseconds += 1000000;
+    }
+
+    return seconds * 1000LL + microseconds / 1000LL;
+}
+
 
 // Estructura para almacenar frecuencias de caracteres
 struct FreqMap {
@@ -295,6 +310,9 @@ int main(int argc, char* argv[])
         printf("Uso: %s <directorio_entrada> <archivo_salida.bin>\n", argv[0]);
         return 1;
     }
+
+    struct timeval startTime, endTime;
+    gettimeofday(&startTime, NULL);
     
     struct FileInfo files[MAX_FILES];
     char* allContent = malloc(1000000); 
@@ -380,5 +398,10 @@ int main(int argc, char* argv[])
     free(allContent);
     
     printf("\nCompresión completada: %s\n", argv[2]);
+    gettimeofday(&endTime, NULL);
+    long long totalMs = elapsedMillis(startTime, endTime);
+    printf("Tiempo total de compresión: %lld ms\n", totalMs);
+    
+    
     return 0;
 }

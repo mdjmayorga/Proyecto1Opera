@@ -1,6 +1,4 @@
 ¡Hola! ¿Cómo estás?
 Ñoño, niño, año, mañana.
 Acentos: á, é, í, ó, ú
-Símbolos: @#%^&*()
-Números: 1234567890
-Puntuación: .,;:!¿?
+Símbolos: @#
