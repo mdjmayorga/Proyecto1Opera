@@ -1,0 +1,5 @@
+aaaaaaaaaa bbbbbbbbbb cccccccccc
+Este texto tiene muchas repeticiones de caracteres.
+aaaaaaaaaa bbbbbbbbbb cccccccccc
+La compresión Huffman funciona mejor con texto repetitivo.
+aaaaaaaaaa bbbbbbbbbb cccccccccc

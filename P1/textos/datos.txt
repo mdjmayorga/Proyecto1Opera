@@ -1,0 +1,6 @@
+ID,Nombre,Edad,Ciudad
+001,Juan Perez,25,Madrid
+002,Ana Garcia,30,Barcelona  
+003,Luis Martinez,28,Valencia
+004,Maria Rodriguez,22,Sevilla
+005,Carlos Lopez,35,Bilbao

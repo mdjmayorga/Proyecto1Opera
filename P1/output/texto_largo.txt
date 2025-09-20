@@ -1,0 +1,11 @@
+La compresión de datos es una técnica fundamental en informática.
+Existen diferentes algoritmos de compresión, cada uno optimizado para tipos específicos de datos.
+
+El algoritmo de Huffman es un método de compresión sin pérdida que asigna códigos de longitud variable a los caracteres.
+Los caracteres más frecuentes reciben códigos más cortos, mientras que los menos frecuentes reciben códigos más largos.
+
+Este enfoque garantiza una compresión óptima basada en la frecuencia de aparición de los símbolos.
+David Huffman desarrolló este algoritmo en 1952 como parte de su trabajo de doctorado.
+
+La eficiencia del algoritmo de Huffman depende de la distribución de frecuencias del texto de entrada.
+Textos con muchas repeticiones se comprimen mejor que textos con distribución uniforme de caracteres.
