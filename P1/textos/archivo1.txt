@@ -1,3 +1,0 @@
-Hola mundo
-Este es un archivo de prueba simple.
-Contiene texto básico para probar la compresión Huffman.
