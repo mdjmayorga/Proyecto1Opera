@@ -414,7 +414,6 @@ static int convertEncodedToBuffer(const char* encodedContent, int encodedLen,
     *lastBitCount = bitsInLastByte;
     return 0;
 }
-
 int main(int argc, char* argv[])
 {
     if (argc != 3) {
@@ -426,46 +425,37 @@ int main(int argc, char* argv[])
     gettimeofday(&startTime, NULL);
 
     struct FileInfo files[MAX_FILES];
-    char* allContent = malloc(1000000);
-    if (!allContent) {
-        perror("malloc");
-        return 1;
-    }
-    int totalSize = 0;
+    long totalSize = 0;
 
     memset(freq, 0, sizeof(freq));
     memset(codes, 0, sizeof(codes));
     freqCount = 0;
     codeCount = 0;
-    allContent[0] = '\0';
 
     int fileCount = readDirectory(argv[1], files);
     if (fileCount == 0) {
         printf("No se encontraron archivos .txt en el directorio\n");
-        free(allContent);
         return 1;
     }
 
+    // Calcular frecuencias de todos los archivos
     for (int i = 0; i < fileCount; i++) {
-        strcat(allContent, files[i].content);
+        calcFreq(files[i].content, files[i].size);
         totalSize += files[i].size;
     }
 
-    printf("\nCalculando frecuencias de %d caracteres...\n", totalSize);
-    calcFreq(allContent, totalSize);
+    printf("\nCalculando frecuencias de %ld caracteres...\n", totalSize);
 
     printf("Construyendo árbol de Huffman...\n");
     struct MinHeapNode* root = buildHuffmanTree();
     if (!root) {
         fprintf(stderr, "Error construyendo el árbol de Huffman\n");
-        free(allContent);
         return 1;
     }
 
     FILE* outFile = fopen(argv[2], "wb");
     if (!outFile) {
         printf("Error: No se pudo crear el archivo de salida\n");
-        free(allContent);
         return 1;
     }
 
@@ -481,12 +471,12 @@ int main(int argc, char* argv[])
         }
     }
 
+    // Procesar cada archivo con un hijo
     for (int i = 0; i < fileCount; i++) {
         int pipefd[2];
         if (pipe(pipefd) == -1) {
             perror("pipe");
             fclose(outFile);
-            free(allContent);
             return 1;
         }
 
@@ -496,11 +486,10 @@ int main(int argc, char* argv[])
             close(pipefd[0]);
             close(pipefd[1]);
             fclose(outFile);
-            free(allContent);
             return 1;
         }
 
-        if (pid == 0) {
+        if (pid == 0) { // hijo
             close(pipefd[0]);
 
             char* encodedContent = NULL;
@@ -521,28 +510,16 @@ int main(int argc, char* argv[])
             }
 
             struct EncodedDataHeader header = { encodedLen, byteCount, lastBitCount };
-            if (writeFull(pipefd[1], &header, sizeof(header)) != sizeof(header)) {
-                perror("write");
-                free(binaryBuffer);
-                free(encodedContent);
-                close(pipefd[1]);
-                _exit(1);
-            }
+            writeFull(pipefd[1], &header, sizeof(header));
 
-            if (byteCount > 0 &&
-                writeFull(pipefd[1], binaryBuffer, (size_t)byteCount) != byteCount) {
-                perror("write");
-                free(binaryBuffer);
-                free(encodedContent);
-                close(pipefd[1]);
-                _exit(1);
-            }
+            if (byteCount > 0)
+                writeFull(pipefd[1], binaryBuffer, (size_t)byteCount);
 
             free(binaryBuffer);
             free(encodedContent);
             close(pipefd[1]);
             _exit(0);
-        } else {
+        } else { // padre
             close(pipefd[1]);
 
             int nameLen = strlen(files[i].filename);
@@ -550,13 +527,10 @@ int main(int argc, char* argv[])
             fwrite(files[i].filename, sizeof(char), nameLen, outFile);
 
             struct EncodedDataHeader header;
-            ssize_t headerBytes = readFull(pipefd[0], &header, sizeof(header));
-            if (headerBytes != sizeof(header)) {
+            if (readFull(pipefd[0], &header, sizeof(header)) != sizeof(header)) {
                 fprintf(stderr, "Error leyendo datos codificados del hijo\n");
                 close(pipefd[0]);
                 fclose(outFile);
-                free(allContent);
-                waitpid(pid, NULL, 0);
                 return 1;
             }
 
@@ -568,22 +542,15 @@ int main(int argc, char* argv[])
                     perror("malloc");
                     close(pipefd[0]);
                     fclose(outFile);
-                    free(allContent);
-                    waitpid(pid, NULL, 0);
                     return 1;
                 }
-
-                ssize_t dataBytes = readFull(pipefd[0], buffer, (size_t)header.byteCount);
-                if (dataBytes != header.byteCount) {
+                if (readFull(pipefd[0], buffer, (size_t)header.byteCount) != header.byteCount) {
                     fprintf(stderr, "Error leyendo datos binarios del hijo\n");
                     free(buffer);
                     close(pipefd[0]);
                     fclose(outFile);
-                    free(allContent);
-                    waitpid(pid, NULL, 0);
                     return 1;
                 }
-
                 fwrite(buffer, 1, (size_t)header.byteCount, outFile);
                 free(buffer);
             }
@@ -591,20 +558,7 @@ int main(int argc, char* argv[])
             fwrite(&header.lastBitCount, sizeof(int), 1, outFile);
 
             close(pipefd[0]);
-
-            int status = 0;
-            if (waitpid(pid, &status, 0) == -1) {
-                perror("waitpid");
-                fclose(outFile);
-                free(allContent);
-                return 1;
-            }
-            if (WIFEXITED(status) && WEXITSTATUS(status) != 0) {
-                fprintf(stderr, "El proceso hijo terminó con código %d\n", WEXITSTATUS(status));
-                fclose(outFile);
-                free(allContent);
-                return 1;
-            }
+            waitpid(pid, NULL, 0);
 
             printf("Archivo %s codificado mediante PID %d\n", files[i].filename, pid);
             free(files[i].content);
@@ -612,13 +566,11 @@ int main(int argc, char* argv[])
     }
 
     fclose(outFile);
-    free(allContent);
 
     printf("\nCompresión completada: %s\n", argv[2]);
-
     gettimeofday(&endTime, NULL);
     long long totalMs = elapsedMillis(startTime, endTime);
     printf("Tiempo total de compresión: %lld ms\n", totalMs);
-    
+
     return 0;
 }
