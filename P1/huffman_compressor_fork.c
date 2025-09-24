@@ -531,7 +531,7 @@ int main(int argc, char* argv[])
                 fclose(outFile);
                 return 1;
             }
-            ..f.f.
+
 
             fwrite(&header.encodedLen, sizeof(int), 1, outFile);
 
