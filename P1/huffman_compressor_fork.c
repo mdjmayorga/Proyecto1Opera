@@ -155,7 +155,7 @@ static void storeCodes(struct MinHeapNode* root, char* str, int depth)
 {
     if (root == NULL) return;
 
-    // Guardar código SOLO en hojas (evita usar un símbolo especial)
+    
     if (!root->left && !root->right) {
         str[depth] = '\0';
         codes[codeCount].character = root->data;
@@ -197,7 +197,6 @@ static struct MinHeapNode* buildHuffmanTree()
         left = extractMin(minHeap);
         right = extractMin(minHeap);
 
-        // Usar '\0' como marcador de nodo interno (no puede ser un carácter real)
         top = newNode('\0', left->freq + right->freq);
         if (!top) {
             free(minHeap->array);
@@ -438,7 +437,6 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-    // Calcular frecuencias de todos los archivos
     for (int i = 0; i < fileCount; i++) {
         calcFreq(files[i].content, files[i].size);
         totalSize += files[i].size;
@@ -489,7 +487,7 @@ int main(int argc, char* argv[])
             return 1;
         }
 
-        if (pid == 0) { // hijo
+        if (pid == 0) {
             close(pipefd[0]);
 
             char* encodedContent = NULL;
@@ -519,7 +517,7 @@ int main(int argc, char* argv[])
             free(encodedContent);
             close(pipefd[1]);
             _exit(0);
-        } else { // padre
+        } else { 
             close(pipefd[1]);
 
             int nameLen = strlen(files[i].filename);
@@ -533,6 +531,7 @@ int main(int argc, char* argv[])
                 fclose(outFile);
                 return 1;
             }
+            ..f.f.
 
             fwrite(&header.encodedLen, sizeof(int), 1, outFile);
 

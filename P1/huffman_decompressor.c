@@ -8,13 +8,12 @@
 #define MAX_CHARS 256
 #define MAX_TREE_HT 256
 
-// Nodo del árbol de Huffman
+
 struct MinHeapNode {
     char data;
     struct MinHeapNode *left, *right;
 };
 
-// Información de códigos
 struct CodeInfo {
     char character;
     char code[MAX_TREE_HT];
@@ -34,7 +33,6 @@ long long elapsedMillis(struct timeval start, struct timeval end)
 }
 
 
-// Crea un nuevo nodo
 struct MinHeapNode* newNode(char data)
 {
     struct MinHeapNode* node = malloc(sizeof(struct MinHeapNode));
@@ -43,7 +41,7 @@ struct MinHeapNode* newNode(char data)
     return node;
 }
 
-// Reconstruye el árbol de Huffman desde la tabla de códigos
+
 struct MinHeapNode* buildTreeFromCodes(struct CodeInfo* codes, int codeCount)
 {
     struct MinHeapNode* root = newNode('$');
@@ -71,7 +69,7 @@ struct MinHeapNode* buildTreeFromCodes(struct CodeInfo* codes, int codeCount)
     return root;
 }
 
-// Convierte bytes a string binario
+
 char* binaryToString(FILE* inFile, int bitLength, int lastBitCount)
 {
     int byteCount = (bitLength + 7) / 8;
@@ -108,7 +106,6 @@ char* binaryToString(FILE* inFile, int bitLength, int lastBitCount)
     return binStr;
 }
 
-// Decodifica usando el árbol de Huffman
 char* decode_file(struct MinHeapNode* root, char* s)
 {
     if (!root || !s) return NULL;
@@ -157,10 +154,8 @@ int main(int argc, char* argv[])
         return 1;
     }
     
-    // Crear directorio de salida
     mkdir(argv[2], 0755);
     
-    // Leer cabecera
     int fileCount, codeCount;
     if (fread(&fileCount, sizeof(int), 1, inFile) != 1 ||
         fread(&codeCount, sizeof(int), 1, inFile) != 1) {
@@ -178,7 +173,6 @@ int main(int argc, char* argv[])
         return 1;
     }
     
-    // Leer tabla de códigos
     struct CodeInfo* codes = malloc(codeCount * sizeof(struct CodeInfo));
     for (int i = 0; i < codeCount; i++) {
         if (fread(&codes[i].character, sizeof(char), 1, inFile) != 1) {
@@ -206,14 +200,11 @@ int main(int argc, char* argv[])
         printf("Código: '%c' -> %s\n", codes[i].character, codes[i].code);
     }
     
-    // Reconstruir árbol de Huffman
     struct MinHeapNode* root = buildTreeFromCodes(codes, codeCount);
     
-    // Descomprimir cada archivo
     for (int i = 0; i < fileCount; i++) {
         printf("\nProcesando archivo %d/%d...\n", i+1, fileCount);
         
-        // Leer nombre del archivo
         int nameLen;
         if (fread(&nameLen, sizeof(int), 1, inFile) != 1) {
             printf("Error leyendo longitud del nombre\n");
@@ -233,7 +224,6 @@ int main(int argc, char* argv[])
         }
         filename[nameLen] = '\0';
         
-        // Leer longitud de datos codificados
         int encodedLen;
         if (fread(&encodedLen, sizeof(int), 1, inFile) != 1) {
             printf("Error leyendo longitud codificada\n");
@@ -243,7 +233,6 @@ int main(int argc, char* argv[])
         
         printf("Archivo: %s, bits codificados: %d\n", filename, encodedLen);
         
-        // Calcular bytes necesarios y leer lastBitCount
         int byteCount = (encodedLen + 7) / 8;
         unsigned char* bytes = malloc(byteCount + 1);
         
@@ -262,7 +251,6 @@ int main(int argc, char* argv[])
             break;
         }
         
-        // Convertir a string binario
         char* binaryStr = malloc(encodedLen + 10);
         int bitIndex = 0;
         
@@ -276,11 +264,9 @@ int main(int argc, char* argv[])
         }
         binaryStr[bitIndex] = '\0';
         
-        // Decodificar
         char* decodedContent = decode_file(root, binaryStr);
         
         if (decodedContent) {
-            // Escribir archivo decodificado
             char outputPath[512];
             sprintf(outputPath, "%s/%s", argv[2], filename);
             FILE* outFile = fopen(outputPath, "w");
